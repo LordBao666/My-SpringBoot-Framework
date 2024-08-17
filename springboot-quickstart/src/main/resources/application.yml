@@ -1,0 +1,9 @@
+
+# diy properties
+diy-user:
+  username : lordbao
+  password : 123456
+  hobbies :
+    - sing
+    - dance
+    - rap
