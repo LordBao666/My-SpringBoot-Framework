@@ -1,9 +1,12 @@
 package com.lordbao.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lordbao.pojo.Type;
+import com.lordbao.pojo.vo.PortalVo;
 import com.lordbao.service.TypeService;
 import com.lordbao.mapper.TypeMapper;
+import com.lordbao.utils.Result;
 import org.springframework.stereotype.Service;
 
 /**

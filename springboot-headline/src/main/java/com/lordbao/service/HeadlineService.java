@@ -2,6 +2,8 @@ package com.lordbao.service;
 
 import com.lordbao.pojo.Headline;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.lordbao.pojo.vo.PortalVo;
+import com.lordbao.utils.Result;
 
 /**
 * @author LordBao
@@ -10,4 +12,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface HeadlineService extends IService<Headline> {
 
+    Result findNewsPage(PortalVo portalVo);
+
+    Result showHeadlineDetail(Integer hid);
 }

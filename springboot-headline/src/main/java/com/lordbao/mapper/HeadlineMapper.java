@@ -1,7 +1,13 @@
 package com.lordbao.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lordbao.pojo.Headline;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.lordbao.pojo.vo.PortalVo;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.Map;
 
 /**
 * @author LordBao
@@ -11,6 +17,9 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 */
 public interface HeadlineMapper extends BaseMapper<Headline> {
 
+    Page<Map> selectHeadlinePage(IPage<PortalVo> page, @Param("portalVo") PortalVo portalVo);
+
+    Map<String, Object> selectHeadlineDetail(@Param("hid") Integer hid);
 }
 
 

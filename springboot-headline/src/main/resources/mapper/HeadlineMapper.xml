@@ -17,10 +17,27 @@
             <result property="isDeleted" column="is_deleted" jdbcType="INTEGER"/>
     </resultMap>
 
-    <sql id="Base_Column_List">
-        hid,title,article,
-        type,publisher,page_views,
-        create_time,update_time,version,
-        is_deleted
-    </sql>
+    <select id="selectHeadlinePage" resultType="java.util.Map">
+        select hid, title, type, publisher,
+               page_views pageViews, TIMESTAMPDIFF(HOUR,create_time,NOW()) pastHours
+        from news_headline
+        where is_deleted=0
+        <if test="portalVo.keyWords!=null and portalVo.keyWords.trim().length()>0">
+            and title like concat('%',#{portalVo.keyWords},'%')
+        </if>
+        <if test="portalVo.type!=null and portalVo.type!=0">
+            and type=#{portalVo.type}
+        </if>
+    </select>
+    <select id="selectHeadlineDetail" resultType="java.util.Map">
+        select  hid,title, article, type, tname typeName, page_views pageViews,
+                TIMESTAMPDIFF(HOUR,h.create_time,NOW()) pastHours, publisher,
+                nick_name author,
+                h.version  version
+        from news_headline h
+        join news_user u
+        join news_type t
+        on h.publisher = u.uid and h.type=t.tid
+        where h.hid = #{hid}
+    </select>
 </mapper>
