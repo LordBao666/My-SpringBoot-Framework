@@ -12,6 +12,8 @@ import com.lordbao.utils.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,6 +69,15 @@ public class HeadlineServiceImpl extends ServiceImpl<HeadlineMapper, Headline>
         Map<String,Object> data = new HashMap<>();
         data.put("headline",map);
         return Result.ok(data);
+    }
+
+    @Override
+    public Result publish(Headline headline) {
+        headline.setCreateTime(new Date());
+        headline.setUpdateTime(new Date());
+        headline.setPageViews(0);
+        headlineMapper.insert(headline);
+        return Result.ok(null);
     }
 }
 
