@@ -1,0 +1,12 @@
+
+out
+target
+!application.*
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+

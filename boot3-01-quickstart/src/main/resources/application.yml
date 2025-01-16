@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: boot3-01-quickstart
+  mvc:
+    content negotiation:
+      favor-parameter: true #基于请求参数内容协商
+      parameter-name: type #请求参数名为type。默认为format。
+      media-types:
+        yaml: text/yaml #取名保证可读性即可，取名yaml，那么你的请求参数就是type=yaml
+        properties: text/properties #请求参数为 type=properties
