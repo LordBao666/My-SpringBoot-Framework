@@ -5,10 +5,13 @@ import com.lordbao.bigevent.pojo.dto.RegisterUserDTO;
 import com.lordbao.bigevent.pojo.dto.UpdateUserDTO;
 import com.lordbao.bigevent.service.UserService;
 import com.lordbao.bigevent.util.JwtUtil;
+import com.lordbao.bigevent.util.Md5Util;
 import com.lordbao.bigevent.util.Result;
 import com.lordbao.bigevent.util.ThreadLocalUtil;
 import jakarta.validation.constraints.Pattern;
+import org.hibernate.validator.constraints.URL;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -88,4 +91,42 @@ public class UserController {
         int rows=userService.update(userDTO);
         return rows>0?Result.success():Result.error("因未知原因,更新失败");
     }
+
+    @PatchMapping("updateAvatar")
+    public Result updateAvatar(@URL String avatarUrl){
+        int rows = userService.updateAvatar(avatarUrl);
+        return rows>0?Result.success():Result.error("因未知原因,更新用户头像失败");
+    }
+
+    @PatchMapping("updatePwd")
+    public Result updatePwd(@RequestBody Map<String,String> params){
+        String oldPwd = params.get("old_pwd");
+        String newPwd = params.get("new_pwd");
+        String rePwd = params.get("re_pwd");
+
+        if(!StringUtils.hasLength(oldPwd) || !StringUtils.hasLength(newPwd) || !StringUtils.hasLength(rePwd)){
+            return Result.error("存在密码为空,请重新输入");
+        }
+
+        if(!newPwd.equals(rePwd)){
+            return Result.error("新密码和重复密码不一致");
+        }
+
+        String regex = "^[a-zA-Z0-9_.]{5,16}$";
+        if(!newPwd.matches(regex)){
+            return Result.error("新密码不能满足只包含字母、数字、下划线和点，且长度在5到16之间的要求");
+        }
+
+        Map<String,Object> claims= ThreadLocalUtil.get();
+        String username = (String) claims.get("username");//注意username是唯一的
+        User user = userService.findByUsername(username);//注意这里的user必然不为空
+        if(!Md5Util.getMD5String(oldPwd).equals(user.getPassword())){//密码如果不匹配
+            return Result.error("原密码不正确!");
+        }
+
+        int rows = userService.updatePwd(newPwd);
+        return rows>0?Result.success():Result.error("因未知原因,更新密码失败");
+    }
+
+
 }

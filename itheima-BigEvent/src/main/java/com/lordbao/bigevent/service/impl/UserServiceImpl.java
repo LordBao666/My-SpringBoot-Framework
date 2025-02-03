@@ -7,10 +7,12 @@ import com.lordbao.bigevent.pojo.dto.RegisterUserDTO;
 import com.lordbao.bigevent.pojo.dto.UpdateUserDTO;
 import com.lordbao.bigevent.service.UserService;
 import com.lordbao.bigevent.util.Md5Util;
+import com.lordbao.bigevent.util.ThreadLocalUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  * @Author Lord_Bao
@@ -42,5 +44,20 @@ public class UserServiceImpl implements UserService {
     @Override
     public int update(UpdateUserDTO userDTO) {
         return userMapper.update(userDTO);
+    }
+
+    @Override
+    public int updateAvatar(String avatarUrl) {
+        Map<String,Object> claims  = ThreadLocalUtil.get();
+        Integer id = (Integer) claims.get("id");
+        return userMapper.updateAvatar(id,avatarUrl);
+    }
+
+    @Override
+    public int updatePwd(String newPwd) {
+        Map<String,Object> claims= ThreadLocalUtil.get();
+        Integer id = (Integer) claims.get("id");
+        //对新密码加密
+        return userMapper.updatePWd(Md5Util.getMD5String(newPwd),id);
     }
 }

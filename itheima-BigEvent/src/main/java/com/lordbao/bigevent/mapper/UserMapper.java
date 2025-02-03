@@ -23,4 +23,8 @@ public interface UserMapper {
     public User findByUsernameAndPassword(@Param("username") String username, @Param("password") String password);
 
     public int update(UpdateUserDTO userDTO);
+
+    public int updateAvatar(@Param("id") Integer id, @Param("avatarUrl") String avatarUrl);
+
+    public int updatePWd(@Param("newPwd") String newPwd, @Param("id") Integer id);
 }
