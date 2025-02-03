@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.lordbao.bigevent.mapper.CategoryMapper">
+    <insert id="addCategory">
+        INSERT INTO category(category_name, category_alias, create_user, create_time, update_time)
+        VALUES (#{categoryName},#{categoryAlias},#{createUser},now(),now())
+    </insert>
+    <update id="updateCategory">
+        UPDATE category SET
+        category_name=#{categoryName},
+        category_alias=#{categoryAlias},
+        update_time=now()
+        WHERE id=#{id} and create_user=#{createUser}
+    </update>
+    <delete id="deleteCategory">
+        DELETE FROM category
+        WHERE create_user=#{userId} and id=#{id}
+    </delete>
+
+    <select id="getAllCategoriesByUserId" resultType="com.lordbao.bigevent.pojo.Category">
+        SELECT * FROM category
+        WHERE create_user=#{userId}
+    </select>
+    <select id="getCategoryById" resultType="com.lordbao.bigevent.pojo.Category">
+        SELECT  * FROM category
+        WHERE id=#{id}
+    </select>
+</mapper>
