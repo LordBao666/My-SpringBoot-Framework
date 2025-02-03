@@ -4,8 +4,17 @@
 
 <mapper namespace="com.lordbao.bigevent.mapper.UserMapper">
     <insert id="add">
-        INSERT INTO user(username, password, create_time, update_time) VALUES (#{username},#{password},now(),now())
+        INSERT INTO user(username, password, nickname,email,create_time, update_time)
+        VALUES (#{username},#{password},#{nickname},#{email},now(),now())
     </insert>
+
+    <update id="update">
+        UPDATE user SET
+        nickname=#{nickname},email =#{email}, update_time=now()
+        WHERE id=#{id}
+    </update>
+
+
     <select id="findByUsername" resultType="com.lordbao.bigevent.pojo.User">
         SELECT  * FROM  user
         WHERE  username = #{username}
