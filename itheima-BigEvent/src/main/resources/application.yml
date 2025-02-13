@@ -14,5 +14,11 @@ mybatis:
     auto-mapping-behavior: full #自动映射级别设置为full.
 logging:
   level:
-    root: warn #设置全局日志级别
-
+    root: info #设置全局日志级别
+#避免用户传入错误的pageNum的话,实际上reasonable配置就够了
+pagehelper:
+#  helper-dialect: mysql #指定分页插件使用的数据库方言
+  #对分页参数进行合理化处理,比如pageNum小于1的话,会自动设置为1,超过最大页码，会自动设置为最大页码。
+  reasonable: true
+  #support-methods-arguments: true #支持通过方法参数传递分页参数。
+#  params: count=countSql #指定分页插件的参数映射。
