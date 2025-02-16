@@ -5,6 +5,10 @@ spring:
     username: lordbao
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
+  profiles:
+    include: qiniu_oss #添加application-qinniu_oss.yaml,注意application-不用写
+
+
 # Mybatis的配置
 mybatis:
   mapper-locations: classpath:/mappers/*Mapper.xml # 指定mapper.xml的位置
@@ -15,6 +19,8 @@ mybatis:
 logging:
   level:
     root: info #设置全局日志级别
+
+
 #避免用户传入错误的pageNum的话,实际上reasonable配置就够了
 pagehelper:
 #  helper-dialect: mysql #指定分页插件使用的数据库方言

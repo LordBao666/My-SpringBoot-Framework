@@ -1,0 +1,5 @@
+my-oss:
+  accessKey: <your  accessKey>
+  secretKey: <your secretKey>
+  bucket: <your bucketName>
+  domain: <your domain>
