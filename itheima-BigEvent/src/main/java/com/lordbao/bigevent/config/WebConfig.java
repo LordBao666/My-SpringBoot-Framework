@@ -4,6 +4,7 @@ package com.lordbao.bigevent.config;
 import com.lordbao.bigevent.interceptor.LogInInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -16,12 +17,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     @Autowired
-    private LogInInterceptor logInInterceptor;
+    private StringRedisTemplate stringRedisTemplate;
 
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         //logInInterceptor 仅不拦截/user/login, /user/register
-        registry.addInterceptor(logInInterceptor).excludePathPatterns("/user/login","/user/register");
+        registry.addInterceptor(new LogInInterceptor(stringRedisTemplate)).excludePathPatterns("/user/login","/user/register");
     }
 }

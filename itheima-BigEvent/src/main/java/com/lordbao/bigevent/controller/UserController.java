@@ -1,22 +1,24 @@
 package com.lordbao.bigevent.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lordbao.bigevent.pojo.User;
 import com.lordbao.bigevent.pojo.dto.RegisterUserDTO;
 import com.lordbao.bigevent.pojo.dto.UpdateUserDTO;
 import com.lordbao.bigevent.service.UserService;
-import com.lordbao.bigevent.util.JwtUtil;
-import com.lordbao.bigevent.util.Md5Util;
-import com.lordbao.bigevent.util.Result;
-import com.lordbao.bigevent.util.ThreadLocalUtil;
+import com.lordbao.bigevent.util.*;
 import jakarta.validation.constraints.Pattern;
 import org.hibernate.validator.constraints.URL;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Author Lord_Bao
@@ -31,6 +33,8 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     @PostMapping("register")
     public Result register(@Validated RegisterUserDTO userDTO) {
@@ -46,23 +50,62 @@ public class UserController {
         }
     }
 
+    //未引入Redis 来充当token的登录密码
+//    @PostMapping("login")
+//    public Result login(@Pattern(regexp = "^[a-zA-Z0-9_]{5,16}$", message = "用户名只允许字母、数字和下划线，且长度在5到16之间") String username,
+//                        @Pattern(regexp = "^[a-zA-Z0-9_.]{5,16}$", message = "密码可以包含字母、数字、下划线和点，且长度在5到16之间") String password) {
+//
+//        //根据上下文来看,username是唯一的
+//
+//        User user = userService.findByUsernameAndPassword(username, password);
+//        if (user != null) {
+//            HashMap<String, Object> claims = new HashMap<>();
+//            claims.put("id",user.getId());
+//            claims.put("username",user.getUsername());
+//            String token = JwtUtil.genToken(claims);
+//            return Result.success(token);//返回token信息
+//        } else {
+//            return Result.error("用户名或密码错误");
+//        }
+//    }
+
+//    引入Redis 来充当token的登录密码
     @PostMapping("login")
     public Result login(@Pattern(regexp = "^[a-zA-Z0-9_]{5,16}$", message = "用户名只允许字母、数字和下划线，且长度在5到16之间") String username,
-                        @Pattern(regexp = "^[a-zA-Z0-9_.]{5,16}$", message = "密码可以包含字母、数字、下划线和点，且长度在5到16之间") String password) {
+                        @Pattern(regexp = "^[a-zA-Z0-9_.]{5,16}$", message = "密码可以包含字母、数字、下划线和点，且长度在5到16之间") String password,
+                        @RequestHeader("Device-ID") String deviceID) throws JsonProcessingException {
+
+        //获取设备信息
+        if(deviceID==null || deviceID.isEmpty()){
+            throw new RuntimeException("设备id不能为空");
+        }
+
 
         //根据上下文来看,username是唯一的
-
         User user = userService.findByUsernameAndPassword(username, password);
         if (user != null) {
-            HashMap<String, Object> claims = new HashMap<>();
-            claims.put("id",user.getId());
-            claims.put("username",user.getUsername());
-            String token = JwtUtil.genToken(claims);
+
+
+            //生成Token,格式为 itheima-big-event:login:user:{userId}:device:{deviceId}
+            String token = String.format(RedisConstants.USER_LOGIN_KEY,user.getId(),deviceID);
+
+            //安全信息过滤
+            User safeUser = new User();
+            safeUser.setId(user.getId());
+            safeUser.setUsername(user.getUsername());
+            String jsonString = JSONHelper.writeValue(safeUser);
+
+
+            //过期时间为12小时
+            //key为token,value为json 字符串
+            stringRedisTemplate.opsForValue().set(token,jsonString,RedisConstants.USER_LOGIN_EXPIRE, TimeUnit.MINUTES);
+
             return Result.success(token);//返回token信息
         } else {
             return Result.error("用户名或密码错误");
         }
     }
+
 
 
     @GetMapping("userinfo")
@@ -99,7 +142,14 @@ public class UserController {
     }
 
     @PatchMapping("updatePwd")
-    public Result updatePwd(@RequestBody Map<String,String> params){
+    public Result updatePwd(@RequestBody Map<String,String> params,@RequestHeader("Device-ID") String deviceID) throws JsonProcessingException {
+
+        //获取设备信息
+        if(deviceID==null || deviceID.isEmpty()){
+            throw new RuntimeException("设备id不能为空");
+        }
+
+
         String oldPwd = params.get("old_pwd");
         String newPwd = params.get("new_pwd");
         String rePwd = params.get("re_pwd");
@@ -125,8 +175,46 @@ public class UserController {
         }
 
         int rows = userService.updatePwd(newPwd);
-        return rows>0?Result.success():Result.error("因未知原因,更新密码失败");
+        if(rows==0){
+            return Result.error("因未知原因,更新密码失败");
+        }
+
+        //更新user信息
+        User safeUser = new User();
+        safeUser.setId(user.getId());
+        safeUser.setUsername(user.getUsername());
+        String jsonString = JSONHelper.writeValue(safeUser);
+
+
+        //删除该用户所有旧的token
+        //userPattern为 itheima-big-event:login:user:{userid}:device:*
+        String userPattern = String.format(RedisConstants.USER_LOGIN_KEY,user.getId(),"*");
+        Set<String> keys = stringRedisTemplate.keys(userPattern);
+        stringRedisTemplate.delete(keys);
+
+        //生成一个 新的token
+        String newToken = String.format(RedisConstants.USER_LOGIN_KEY,user.getId(),deviceID);
+        stringRedisTemplate.opsForValue().set(newToken,jsonString);
+
+        //返回新的token
+        return Result.success(newToken);
     }
 
 
+
+    @PostMapping("logout")
+    public Result logout(@RequestHeader("Device-ID") String deviceID)  {
+
+        //获取设备信息
+        if(deviceID==null || deviceID.isEmpty()){
+            throw new RuntimeException("设备id不能为空");
+        }
+
+        Map<String,Object> claims = ThreadLocalUtil.get();
+        Integer userid = (Integer) claims.get("id");
+        String token = String.format(RedisConstants.USER_LOGIN_KEY,userid,deviceID);
+        stringRedisTemplate.delete(token);//删除当前用户的当前设备的id
+
+        return Result.success();
+    }
 }
