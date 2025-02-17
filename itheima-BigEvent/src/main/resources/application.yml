@@ -7,7 +7,8 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:   #redis
-      host: 192.168.214.49
+#      host: 192.168.214.49
+      host: 172.16.41.218
       port: 6379 #默认就是6379
       password: laozishudao4
   #引入其他配置文件
